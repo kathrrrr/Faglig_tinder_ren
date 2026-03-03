@@ -24,24 +24,25 @@ db_password = st.secrets["db_password"]
 db_host = st.secrets["db_host"]
 db_name = st.secrets["db_name"]
 
-st.set_page_config(
+"""st.set_page_config(
     page_title="Faglig Tinder – Oversigt",
     page_icon="📋",
     layout="wide",
     initial_sidebar_state="collapsed",
-)
+)"""
 
 # Skjul sidebar + fjern margin (kant-til-kant)
-st.markdown(
-    """
+# 1️⃣ Skal være først
+st.set_page_config(layout="wide")
+
+# 2️⃣ Skjul topbar
+st.markdown("""
     <style>
-      [data-testid="stSidebar"] { display: none; }
-      .block-container { padding: 0rem !important; }
-      section.main > div { padding: 0rem !important; }
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
     </style>
-    """,
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # -------------------------
 # DB config
