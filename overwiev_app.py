@@ -3,6 +3,21 @@ import streamlit.components.v1 as components
 import mysql.connector
 import html
 
+st.set_page_config(layout="wide")
+
+# Skjul Streamlit top bar + footer
+hide_streamlit_style = """
+    <style>
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+
+
+
 
 db_user = st.secrets["db_user"]
 db_password = st.secrets["db_password"]
