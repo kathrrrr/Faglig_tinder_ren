@@ -17,16 +17,7 @@ st.set_page_config(
 )
 
 # Skjul sidebar + fjern margin (kant-til-kant)
-st.markdown(
-    """
-    <style>
-      [data-testid="stSidebar"] { display: none; }
-      .block-container { padding: 0rem !important; }
-      section.main > div { padding: 0rem !important; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+
 
 # -------------------------
 # DB config
@@ -40,6 +31,27 @@ def _get_cfg():
         "database": db_name,
         "ssl_disabled": False,
     }
+
+st.markdown("""
+<style>
+
+/* Skjul topbar */
+[data-testid="stHeader"] {
+    display: none;
+}
+
+/* Skjul footer */
+footer {
+    visibility: hidden;
+}
+
+/* Fjern øverste margin */
+.block-container {
+    padding-top: 0rem !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 def _connect():
     cfg = _get_cfg()
