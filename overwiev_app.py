@@ -4,10 +4,6 @@ import mysql.connector
 import html
 
 
-db_user = st.secrets["db_user"]
-db_password = st.secrets["db_password"]
-db_host = st.secrets["db_host"]
-db_name = st.secrets["db_name"]
 
 st.set_page_config(
     page_title="Faglig Tinder – Oversigt",
@@ -15,6 +11,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+
+db_user = st.secrets["db_user"]
+db_password = st.secrets["db_password"]
+db_host = st.secrets["db_host"]
+db_name = st.secrets["db_name"]
+
 
 # Skjul sidebar + fjern margin (kant-til-kant)
 
