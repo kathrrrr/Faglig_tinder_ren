@@ -104,7 +104,7 @@ def fetch_overview_rows():
 # -------------------------
 st.title("Oversigt: Udfordringer og hvem der har valgt dem")
 
-refresh_seconds = 60
+refresh_seconds = 10
 components.html(f"<meta http-equiv='refresh' content='{refresh_seconds}'>", height=0)
 
 try:
