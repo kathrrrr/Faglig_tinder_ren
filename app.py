@@ -2,9 +2,7 @@ import streamlit as st
 import mysql.connector
 
 import time
-st.write("VERSION:", "2026-02-28-TEST")
-st.write("FILE:", __file__)
-st.write("TIME:", time.time())
+
 
 db_user = st.secrets["db_user"]
 db_password = st.secrets["db_password"]
@@ -12,6 +10,10 @@ db_host = st.secrets["db_host"]
 db_name = st.secrets["db_name"]
 
 st.set_page_config(page_title="Faglig Tinder", layout="centered")
+
+st.write("VERSION:", "2026-02-28-TEST")
+st.write("FILE:", __file__)
+st.write("TIME:", time.time())
 
 # -------------------------
 # DB config (hardcoded)
@@ -297,9 +299,12 @@ with tab1:
                     if has_voted:
                         if st.button(
                             "↩️ Fortryd",
-                            key=f"undo_{pid}",
-                            disabled=st.session_state["vote_busy"],
+                        key=f"undo_{pid}",
+                        disabled=st.session_state["vote_busy"],
                         ):
+                            st.session_state["busy_vote_pid"] = pid
+                            st.session_state["busy_vote_action"] = "undo"
+                            st.rerun()
                             st.session_state["busy_vote_pid"] = pid
                             st.session_state["busy_vote_action"] = "undo"
                             st.rerun()
