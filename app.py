@@ -111,7 +111,16 @@ def create_problem(user_id: int, tekst: str) -> int:
     return pid
 
 def vote_yes(user_id: int, problem_id: int):
-    db_execute("INSERT INTO Vote (problemId, userId) VALUES (%s, %s)", (problem_id, user_id))
+    try:
+        db_execute(
+            "INSERT INTO Vote (problemId, userId) VALUES (%s, %s)",
+            (problem_id, user_id),
+        )
+    except Exception as e:
+        msg = str(e).lower()
+        if "duplicate" in msg or "unique" in msg:
+            return
+        raise
 
 def vote_remove(user_id: int, problem_id: int):
     db_execute(
@@ -167,6 +176,8 @@ def handle_pending_vote():
     if not pid or not action or not user_id:
         return
 
+    st.session_state["vote_busy"] = True
+
     try:
         if action == "yes":
             vote_yes(user_id, pid)
@@ -175,6 +186,7 @@ def handle_pending_vote():
     finally:
         st.session_state["busy_vote_pid"] = None
         st.session_state["busy_vote_action"] = None
+        st.session_state["vote_busy"] = False
 # -------------------------
 # UI
 # -------------------------
@@ -188,6 +200,7 @@ st.session_state.setdefault("pending_user_name", "")
 st.session_state.setdefault("creating_problem", False)
 st.session_state.setdefault("busy_vote_pid", None)
 st.session_state.setdefault("busy_vote_action", None)   # "yes" eller "undo"
+st.session_state.setdefault("vote_busy", False)
 
 MAX_CHOICES = 2
 
@@ -247,7 +260,8 @@ with tab1:
                     st.session_state["busy_vote_pid"] = None
                     st.session_state["busy_vote_action"] = None
                     st.error(f"Kunne ikke gemme valg: {e}")
-
+        if st.session_state["vote_busy"]:
+            st.info("Gemmer valg...")
         # --- Liste over udfordringer ---
         try:
             problems = list_problems()
@@ -284,7 +298,7 @@ with tab1:
                         if st.button(
                             "↩️ Fortryd",
                             key=f"undo_{pid}",
-                            disabled=(st.session_state["busy_vote_pid"] is not None),
+                            disabled=st.session_state["vote_busy"],
                         ):
                             st.session_state["busy_vote_pid"] = pid
                             st.session_state["busy_vote_action"] = "undo"
@@ -294,7 +308,7 @@ with tab1:
                         if st.button(
                             "✅ Ja",
                             key=f"yes_{pid}",
-                            disabled=(limit_reached or st.session_state["busy_vote_pid"] is not None),
+                            disabled=(limit_reached or st.session_state["vote_busy"]),
                         ):
                             st.session_state["busy_vote_pid"] = pid
                             st.session_state["busy_vote_action"] = "yes"
