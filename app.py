@@ -159,7 +159,22 @@ def matches_for_user(user_id: int):
         """,
         (user_id,),
     )
+def handle_pending_vote():
+    pid = st.session_state.get("busy_vote_pid")
+    action = st.session_state.get("busy_vote_action")
+    user_id = st.session_state.get("user_id")
 
+    if not pid or not action or not user_id:
+        return
+
+    try:
+        if action == "yes":
+            vote_yes(user_id, pid)
+        elif action == "undo":
+            vote_remove(user_id, pid)
+    finally:
+        st.session_state["busy_vote_pid"] = None
+        st.session_state["busy_vote_action"] = None
 # -------------------------
 # UI
 # -------------------------
@@ -171,6 +186,8 @@ st.session_state.setdefault("voted_problem_ids", set())  # session-only guard
 st.session_state.setdefault("creating_user", False)
 st.session_state.setdefault("pending_user_name", "")
 st.session_state.setdefault("creating_problem", False)
+st.session_state.setdefault("busy_vote_pid", None)
+st.session_state.setdefault("busy_vote_action", None)   # "yes" eller "undo"
 
 MAX_CHOICES = 2
 
@@ -221,6 +238,16 @@ with tab1:
         st.subheader(f"Velkommen {st.session_state['user_name']} ")
         st.write("Klik **Ja** på de udfordringer du gerne vil tale om. Hvis der findes en lignende, så stem ja i stedet for at oprette en ny.")
 
+        if st.session_state["busy_vote_pid"] is not None:
+            with st.spinner("Gemmer valg..."):
+                try:
+                    handle_pending_vote()
+                    st.rerun()
+                except Exception as e:
+                    st.session_state["busy_vote_pid"] = None
+                    st.session_state["busy_vote_action"] = None
+                    st.error(f"Kunne ikke gemme valg: {e}")
+
         # --- Liste over udfordringer ---
         try:
             problems = list_problems()
@@ -254,29 +281,24 @@ with tab1:
 
                     # Hvis stemt: vis Fortryd (altid aktiv)
                     if has_voted:
-                        if st.button("↩️ Fortryd", key=f"undo_{pid}"):
-                            try:
-                                vote_remove(st.session_state["user_id"], pid)
-                                st.session_state["voted_problem_ids"].discard(pid)  # valgfrit
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Kunne ikke fortryde: {e}")
-
+                        if st.button(
+                            "↩️ Fortryd",
+                            key=f"undo_{pid}",
+                            disabled=(st.session_state["busy_vote_pid"] is not None),
+                        ):
+                            st.session_state["busy_vote_pid"] = pid
+                            st.session_state["busy_vote_action"] = "undo"
+                            st.rerun()
                     # Hvis ikke stemt: vis Ja (deaktiveres hvis grænse nået)
                     else:
-                        if st.button("✅ Ja", key=f"yes_{pid}", disabled=limit_reached):
-                            # ekstra sikkerhed
-                            if count_choices(st.session_state["user_id"]) >= MAX_CHOICES:
-                                st.warning("Du har allerede valgt det maksimale antal udfordringer.")
-                                st.stop()
-
-                            try:
-                                vote_yes(st.session_state["user_id"], pid)
-                                st.session_state["voted_problem_ids"].add(pid)  # valgfrit
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Kunne ikke stemme: {e}")
-
+                        if st.button(
+                            "✅ Ja",
+                            key=f"yes_{pid}",
+                            disabled=(limit_reached or st.session_state["busy_vote_pid"] is not None),
+                        ):
+                            st.session_state["busy_vote_pid"] = pid
+                            st.session_state["busy_vote_action"] = "yes"
+                            st.rerun()
 
 
 
