@@ -165,6 +165,9 @@ st.title("Faglig Tinder")
 st.session_state.setdefault("user_id", None)
 st.session_state.setdefault("user_name", "")
 st.session_state.setdefault("voted_problem_ids", set())  # session-only guard
+st.session_state.setdefault("creating_user", False)
+st.session_state.setdefault("pending_user_name", "")
+st.session_state.setdefault("creating_problem", False)
 
 MAX_CHOICES = 2
 
@@ -180,17 +183,25 @@ with tab1:
 
         name = st.text_input("Brugernavn", value=st.session_state["user_name"], placeholder="Fx Kathrine")
 
-        if st.button("Opret", type="primary"):
-            try:
-                uid = ensure_user_strict(name)
-                st.session_state["user_id"] = uid
-                st.session_state["user_name"] = name.strip()
-                st.rerun()
-            except ValueError as e:
-                st.warning(str(e))
-            except Exception as e:
-                st.error(f"Kunne ikke oprette bruger: {e}")
+        if st.button("Opret", type="primary", disabled=st.session_state["creating_user"]):
+            st.session_state["pending_user_name"] = name.strip()
+            st.session_state["creating_user"] = True
+            st.rerun()
 
+        if st.session_state["creating_user"] and not st.session_state["user_id"]:
+            with st.spinner("Opretter bruger..."):
+                try:
+                    uid = ensure_user_strict(st.session_state["pending_user_name"])
+                    st.session_state["user_id"] = uid
+                    st.session_state["user_name"] = st.session_state["pending_user_name"]
+                    st.session_state["creating_user"] = False
+                    st.rerun()
+                except ValueError as e:
+                    st.session_state["creating_user"] = False
+                    st.warning(str(e))
+                except Exception as e:
+                    st.session_state["creating_user"] = False
+                    st.error(f"Kunne ikke oprette bruger: {e}")
     else:
         # --- Status / begrænsning ---
         used = count_choices(st.session_state["user_id"])
