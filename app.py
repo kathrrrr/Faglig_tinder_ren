@@ -1,7 +1,10 @@
 import streamlit as st
 import mysql.connector
 
-
+import time
+st.write("VERSION:", "2026-02-28-TEST")
+st.write("FILE:", __file__)
+st.write("TIME:", time.time())
 
 db_user = st.secrets["db_user"]
 db_password = st.secrets["db_password"]
