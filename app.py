@@ -299,28 +299,21 @@ with tab1:
 
         max_len = 280
         tekst = st.text_area("Din udfordring", height=120)
-        st.caption(f"{len(tekst.strip())}/{max_len} tegn")
 
-        too_long = len(tekst.strip()) > max_len
-        if too_long:
-            st.error("Teksten er for lang – forkort den lidt.")
+        if st.button("Indsend udfordring", type="primary", disabled=st.session_state["creating_problem"]):
+            st.session_state["pending_problem_text"] = tekst.strip()
+            st.session_state["creating_problem"] = True
+            st.rerun()
 
-        if st.button("Indsend udfordring", type="primary", disabled=(too_long or limit_reached)):
-            if count_choices(st.session_state["user_id"]) >= MAX_CHOICES:
-                st.warning("Du har allerede valgt det maksimale antal udfordringer.")
-                st.stop()
-
-            t = tekst.strip()
-            if not t:
-                st.warning("Skriv en udfordring først.")
-            elif len(t) > max_len:
-                st.error("Teksten er for lang.")
-            else:
+        if st.session_state["creating_problem"]:
+            with st.spinner("Opretter udfordring..."):
                 try:
-                    pid = create_problem(st.session_state["user_id"], t)
-                    st.success(f"Udfordring oprettet (#{pid}). Du har automatisk stemt ja til din egen.")
+                    pid = create_problem(st.session_state["user_id"], st.session_state["pending_problem_text"])
+                    st.session_state["creating_problem"] = False
+                    st.success(f"Udfordring oprettet (#{pid}).")
                     st.rerun()
                 except Exception as e:
+                    st.session_state["creating_problem"] = False
                     st.error(f"Kunne ikke oprette udfordring: {e}")
 # -------------------------
 # TAB 2: Matches
